@@ -26,24 +26,10 @@ document.getElementById('capture').addEventListener('click', function() {
             }
         });
 
-
-        //const endpoint = "https://plantdetection-prediction.cognitiveservices.azure.com/"; 
-        const endpoint = "https://plantdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/cc3c61ed-35ec-4669-9e07-9034f41490b0/classify/iterations/dogs/image" 
-        const predictionKey = "79b97792e76c484880c2b81311b0d97b";
-        const contentType = "application/octet-stream";
-
-        const headers = new Headers({
-            'Content-Type': contentType,
-            'Prediction-Key': predictionKey
-        });
-
-        const init = {
+        fetch('/classify-image', {
             method: 'POST',
-            body: blob,
-            headers: headers
-        };
-
-        fetch(endpoint, init)
+            body: formData
+        })
         .then(response => response.json())
         //.then(response => {
             //console.log(response); // Process and display the results
