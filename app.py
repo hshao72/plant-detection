@@ -4,57 +4,54 @@ load_dotenv()
 
 
 from flask import Flask, redirect, url_for, request, render_template, session
+from werkzeug.utils import secure_filename
+import os
+
+from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
+from msrest.authentication import ApiKeyCredentials
 
 app = Flask(__name__)
 
 
-
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('index2.html')
 
 
 @app.route('/', methods=['POST'])
 def index_post():
-    # Read the values from the form
-    original_text = request.form['text']
-    target_language = request.form['language']
-
-    # Load the values from .env
-    key = os.environ['KEY']
-    endpoint = os.environ['ENDPOINT']
-    location = os.environ['LOCATION']
-
-    # Indicate that we want to translate and the API version (3.0) and the target language
-    path = '/translate?api-version=3.0'
-    # Add the target language parameter
-    target_language_parameter = '&to=' + target_language
-    # Create the full URL
-    constructed_url = endpoint + path + target_language_parameter
-
-    # Set up the header information, which includes our subscription key
-    headers = {
-        'Ocp-Apim-Subscription-Key': key,
-        'Ocp-Apim-Subscription-Region': location,
-        'Content-type': 'application/json',
-        'X-ClientTraceId': str(uuid.uuid4())
-    }
-
-    # Create the body of the request with the text to be translated
-    body = [{ 'text': original_text }]
-
-    # Make the call using post
-    translator_request = requests.post(constructed_url, headers=headers, json=body)
-    # Retrieve the JSON response
-    translator_response = translator_request.json()
-    # Retrieve the translation
-    translated_text = translator_response[0]['translations'][0]['text']
-
-    # Call render template, passing the translated text,
-    # original text, and target language to the template
+    if 'file' not in request.files:
+        return redirect(request.url)
+    file = request.files['file']
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if file.filename == '':
+        return redirect(request.url)
+    if file:
+        # Secure the filename before saving it directly
+        filename = secure_filename(file.filename)
+        # Save the file to a directory, e.g., 'uploads'
+        filepath = os.path.join('upload', filename)
+        file.save(filepath)
+        # Now you can use the image for further processing as needed
+    
     return render_template(
-        'results.html',
-        translated_text=translated_text,
-        original_text=original_text,
-        target_language=target_language
+        'results2.html'
     )
+    
+@app.route('/upload', methods=['POST'])   
+def upload_file():
+    if 'file' not in request.files:
+        return 'No file part', 400
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file', 400
+    if file:
+        # Process the file as needed, e.g., save it to a file or a database
+        filename = secure_filename(file.filename)
+        filepath = os.path.join('upload', filename)
+        file.save(filepath)
+        return 'File uploaded successfully', 200
+            
+if __name__ == "__main__":
+    app.run(debug=True)
