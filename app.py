@@ -23,9 +23,9 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index2.html')
+    return render_template('index.html')
 
-
+'''
 @app.route('/', methods=['POST'])
 def index_post():
     if 'file' not in request.files:
@@ -46,6 +46,7 @@ def index_post():
     return render_template(
         'results2.html'
     )
+'''
     
 @app.route('/upload', methods=['POST'])   
 def upload_file():
@@ -64,6 +65,14 @@ def upload_file():
     
 @app.route('/classify-image', methods=['POST'])
 def classify_image():
+    '''
+    if 'image' not in request.files:
+        return 'No image part', 400
+    file = request.files['image']
+    if file.filename == '':
+        return 'No image selected', 400
+    '''
+        
     # Load the Azure Custom Vision API details from .env
     endpoint = os.getenv('CUSTOM_VISION_ENDPOINT')
     prediction_key = os.getenv('PREDICTION_KEY')
@@ -83,6 +92,37 @@ def classify_image():
     # Return the classification results
     return jsonify(results)
 
+
+@app.route('/classify-image2', methods=['POST'])
+def classify_image2():
+    
+    if 'image' not in request.files:
+        return 'No image part', 400
+    file = request.files['image']
+    if file.filename == '':
+        return 'No image selected', 400
+    
+    # Prepare the image for sending to Azure
+    img_data = file.read()
+    
+    # Azure Custom Vision API details
+    endpoint = os.getenv('CUSTOM_VISION_ENDPOINT')
+    prediction_key = os.getenv('PREDICTION_KEY')
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Prediction-Key': prediction_key
+    }
+    
+    response = requests.post(endpoint, headers=headers, data=img_data)
+    if response.status_code != 200:
+        return 'Error calling Azure Custom Vision API', 500
+    
+    results = response.json()
+    
+    # Process and display the results...
+    # For simplicity, just return the raw JSON response
+    return jsonify(results)    
+    
             
 if __name__ == "__main__":
     app.run(debug=True)
